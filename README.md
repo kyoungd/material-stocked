@@ -51,6 +51,8 @@ sudo docker run -p 6379:6379 -it --rm redislabs/redistimeseries
 redis-cli
 ```
 
+more into
+
 ## Running GRAFANA in a DOCKER Container
 
 sudo systemctl start grafana-server
