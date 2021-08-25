@@ -1,10 +1,12 @@
-from redisUtil import RedisTimeFrame, TimeSeriesAccess
+from redisUtil import RedisTimeFrame, TimeSeriesAccess, SetInterval
 from redisTSBars import RealTimeBars
 from redisHash import ThreeBarPlayStack
+from datetime import datetime
+import time
 
 
 class StudyThreeBarsFilter:
-    _MinimumPriceJump = 0.4
+    _MinimumPriceJump = 0.2
 
     @staticmethod
     def _column(matrix, i):
@@ -51,12 +53,12 @@ class StudyThreeBarsFilter:
 
 class StudyThreeBarsCandidates:
 
-    def __init__(self, stack=None):
+    def __init__(self, stack: ThreeBarPlayStack = None):
         if (stack == None):
             self.stack = ThreeBarPlayStack()
         else:
             self.stack = stack
-        self.rtb = RealTimeBars()
+        self.rtb: RealTimeBars = RealTimeBars()
         self.store = []
 
     def _candidate(self, symbol, timeframe, getPriceData):
@@ -97,9 +99,16 @@ def testGetPriceData(item, symbol, timeframe):
     ]
 
 
+app: StudyThreeBarsCandidates = None
+
 if __name__ == "__main__":
-    keys = ['FANG']
-    app = StudyThreeBarsCandidates()
-    app.run(keys, testGetPriceData)
+    # keys = ['FANG']
     # app = StudyThreeBarsCandidates()
+    # app.run(keys, testGetPriceData)
+    app = StudyThreeBarsCandidates()
     # app.run()
+    obj_now = datetime.now()
+    secWait = 60 - obj_now.second
+    time.sleep(secWait + 4)
+    app.run()
+    SetInterval(60, app.run)

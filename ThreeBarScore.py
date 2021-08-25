@@ -64,23 +64,31 @@ class ThreeBarStudy():
     async def _handleTrade(trade):
         data = {'symbol': trade['S'],
                 'price': trade['p'], 'volume': trade['s']}
+        print('bar: ', data)
         ThreeBarStudy.process.study(data)
-        # print('bar: ', bar._raw)
 
     @staticmethod
     def candidateEvent(data):
+        print(data)
         if (ThreeBarStudy.stream == None):
             return
-        if (len(data.subscribes) > 0):
-            ThreeBarStudy.stream.subscribe_trades(
-                ThreeBarStudy._handleTrade, data.subscribes)
-        if (len(data.unsubscribes) > 0):
-            ThreeBarStudy.stream.unsubscribe_trades(data.unsubscribes)
+        if ('subscribe' in data and len(data['subscribe']) > 0):
+            for symbol in data['subscribe']:
+                try:
+                    ThreeBarStudy.stream.subscribe_trades(
+                        ThreeBarStudy._handleTrade, symbol)
+                except:
+                    print('subscribe failed: ', symbol)
+        if ('unsubscribe' in data and len(data['unsubscribe']) > 0):
+            for symbol in data['unsubscribe']:
+                try:
+                    ThreeBarStudy.stream.unsubscribe_trades(symbol)
+                except:
+                    print('unsubscribe failed: ', symbol)
 
     @staticmethod
     def run():
         logging.basicConfig(level=logging.INFO)
-
         ThreeBarStudy.stream.run()
         ThreeBarStudy.run_connection(ThreeBarStudy.stream)
 

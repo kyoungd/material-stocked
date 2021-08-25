@@ -34,16 +34,15 @@ def main():
                     base_url=URL('wss://stream.data.alpaca.markets/v2'),
                     data_feed=feed)
     # stream.subscribe_trade_updates(print_trade_update)
-    # stream.subscribe_trades(print_trade, 'AAPL')
-    stream.subscribe_quotes(print_quote, 'ERYP')
-    stream.subscribe_quotes(print_quote, 'AAPL')
-    stream.subscribe_quotes(print_quote, 'GOOG')
+    stream.subscribe_trades(print_trade, 'AAPL')
+    # stream.subscribe_quotes(print_quote, 'ERYP')
+    # stream.subscribe_quotes(print_trade, 'AAPL')
+    # stream.subscribe_quotes(print_quote, 'GOOG')
 
     @stream.on_bar('*')
     async def _(bar):
-        # print('bar', bar)
+        print('bar', bar)
         # print('type', type(bar))
-        print('')
 
     @stream.on_status("*")
     async def _(status):

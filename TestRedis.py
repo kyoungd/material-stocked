@@ -68,9 +68,9 @@ def run():
     stream = AlpacaStreamAccess.connection()
 
     stream.subscribe_trades(print_trade, 'AAPL')
-    stream.subscribe_quotes(print_quote, 'IBM')
+    stream.subscribe_quotes(print_trade, 'IBM')
     stream.subscribe_quotes(print_quote, 'AAPL')
-    stream.subscribe_quotes(print_quote, 'GOOG')
+    stream.subscribe_quotes(print_trade, 'GOOG')
 
     # @stream.on_bar('*')
     # async def _(bar):

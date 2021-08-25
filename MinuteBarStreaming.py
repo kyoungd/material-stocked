@@ -4,8 +4,8 @@ from redisUtil import AlpacaStreamAccess
 from redisPubsub import StreamBarsPublisher, StreamBarsSubscriber
 from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
 
-# import alpaca_trade_api as alpaca
-# from alpaca_trade_api.stream import Stream
+import alpaca_trade_api as alpaca
+from alpaca_trade_api.stream import Stream
 # from alpaca_trade_api.common import URL
 # from redistimeseries.client import Client
 # from alpaca_trade_api.rest import REST
@@ -14,8 +14,9 @@ from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
 
 class MinuteBarStream:
     log = None
-    subscriber = None
-    publisher = None
+    subscriber: StreamBarsSubscriber = None
+    publisher: StreamBarsPublisher = None
+    stream: Stream = None
 
     @staticmethod
     def init():
@@ -25,6 +26,7 @@ class MinuteBarStream:
         MinuteBarStream.subscriber = StreamBarsSubscriber()
         MinuteBarStream.subscriber.start()
         MinuteBarStream.publisher = StreamBarsPublisher()
+        MinuteBarStream.stream = AlpacaStreamAccess.connection()
 
 # you could leave out the status to also get the inactive ones
 # https://forum.alpaca.markets/t/how-do-i-get-all-stocks-name-from-the-market-into-a-python-list/2070/2
@@ -52,8 +54,7 @@ class MinuteBarStream:
     @staticmethod
     def run():
         logging.basicConfig(level=logging.INFO)
-        stream = AlpacaStreamAccess.connection()
-        stream.subscribe_bars(MinuteBarStream.handleBar, '*')
+        MinuteBarStream.stream.subscribe_bars(MinuteBarStream.handleBar, '*')
 
         # feed = 'sip'  # <- replace to SIP if you have PRO subscription
         # stream = Stream(AlpacaAccess.ALPACA_API_KEY,
@@ -102,8 +103,8 @@ def test():
 
 
 if __name__ == "__main__":
-    app = CreateRedisStockTimeSeriesKeys()
-    app.run()
+    # app = CreateRedisStockTimeSeriesKeys()
+    # app.run()
     MinuteBarStream.init()
     MinuteBarStream.run()
     # test()

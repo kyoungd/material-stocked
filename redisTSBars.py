@@ -16,7 +16,7 @@ from redistimeseries.client import Client
 
 class RealTimeBars:
     def __init__(self, rts=None):
-        self.rts = TimeSeriesAccess.connection(rts)
+        self.rts: Client = TimeSeriesAccess.connection(rts)
 
     def redisRealtime(self, data):
         timeframe = RedisTimeFrame.REALTIME
@@ -98,9 +98,11 @@ class RealTimeBars:
             rts.zadd('active_stocks', 0, assets.symbol)
         print('get active stocks')
 
+    # ts.queryindex INDICATOR=max TIMEFRAME=1MIN
+
     def all_keys(self):
         symbols = []
-        for key in self.rts.keys("data_close_0:*"):
-            symbol = bytes.decode(key).split(':')[1]
+        for key in self.rts.queryindex(['INDICATOR=max', 'TIMEFRAME=1MIN']):
+            symbol = key.split(':')[1]
             symbols.append(symbol)
         return symbols

@@ -31,6 +31,9 @@ class RedisHash:
     def add(self, symbol, jsondata):
         return self._add(self.key, symbol, jsondata)
 
+    def delete(self, symbol):
+        self.redis.hdel(self.key, symbol)
+
     def _value(self, key, symbol):
         data = self.redis.hget(key, symbol)
         if data == None:
@@ -79,7 +82,14 @@ class ThreeBarPlayStack(RedisHash):
 
     def closeMark(self):
         subs = [*self.subscribes.keys()]
+        print('SUBS:')
+        print(subs)
         unsubs = [*self.unsubscribes.keys()]
+        print('UNSUB:')
+        print(unsubs)
+        if len(unsubs) > 0:
+            for unsub in unsubs:
+                self.delete(unsub)
         data = {'subscribe': subs, 'unsubscribe': unsubs}
         self.publisher.publish(data)
         self.subscribes = {}
