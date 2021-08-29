@@ -1,8 +1,8 @@
 from redisUtil import RedisTimeFrame
 from redisTSBars import RealTimeBars
-from redisHash import ThreeBarPlayStack
+from redisHash import ThreeBarPlayStack, SetupScore
 from redis3barUtil import StudyThreeBarsUtil
-from redisUtil import RedisTimeFrame
+from redisUtil import RedisTimeFrame, KeyName
 from redisSortedSet import ThreeBarPlayScore
 import json
 
@@ -11,38 +11,34 @@ class StudyThreeBarsScore:
     def __init__(self):
         self.stack = ThreeBarPlayStack()
         self.rtb = RealTimeBars()
-        self.score = ThreeBarPlayScore()
+        self.score = SetupScore(KeyName.KEY_SETUP_SCORE)
 
     def _thirdBarPlay(self, newPrice, realtime, stack):
-        score = 0
+        self.score.score = 0
         stackValue = stack['value']
         if (newPrice < stackValue['secondPrice'] and newPrice > stackValue['firstPrice']):
             prices = StudyThreeBarsUtil.column(realtime, 1)
-            score += 25
+            self.score.score += 25
             trend = StudyThreeBarsUtil.trend_value(prices)
             devi = StudyThreeBarsUtil.standardDeviation((prices))
             if (stackValue['secondPrice'] - stackValue['firstPrice']) > 0.5:
-                score += 10
+                self.score.score += 25
             if (trend > 0.2):
-                score += 10
+                self.score.trend = 10
                 if (devi < 0.2):
-                    score += 10
-        # else:
-        #     trend = StudyThreeBarsUtil.trend_value(prices)
-        #     devi = StudyThreeBarsUtil.standardDeviation((prices))
-        #     score = 0
-        return score
+                    self.score.trend += 10
+            self.score.save()
 
     def process(self, package, getRealTimeData, getStackData):
         data = json.loads(package)
         symbol = data['symbol']
+        self.score.name = symbol
         newPrice = data['close']
         realtime = getRealTimeData(
             None, symbol, RedisTimeFrame.REALTIME)
         stack = getStackData(symbol)
         if (stack != None):
-            score = self._thirdBarPlay(newPrice, realtime, stack)
-            self.score.set(symbol, score)
+            self._thirdBarPlay(newPrice, realtime, stack)
 
     def study(self, package, getRealTimeData=None, getStackData=None):
         if (getRealTimeData == None):
@@ -50,6 +46,10 @@ class StudyThreeBarsScore:
         if (getStackData == None):
             getStackData = self.stack.value
         self.process(package, getRealTimeData, getStackData)
+
+    def printAllScores(self):
+        data = self.score.getAll()
+        print(data)
 
 
 def testGetStackData(symbol):

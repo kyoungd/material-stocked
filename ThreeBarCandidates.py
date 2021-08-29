@@ -26,21 +26,20 @@ class StudyThreeBarsFilter:
         return True
 
     @staticmethod
+    def barCandidate(symbol, firstPrice, secondPrice, thirdPrice, timeframe):
+        return {'symbol': symbol, 'value': {
+            'firstPrice': firstPrice,
+            'secondPrice': secondPrice,
+            'thirdPrice': thirdPrice,
+            'timeFrame': timeframe
+        }}
+
+    @staticmethod
     def potentialList(symbol, prices, timeframe):
         if len(prices) > 2 and StudyThreeBarsFilter._isFirstTwoBars(prices[2][1], prices[1][1], prices[0][1]):
-            return True, {'symbol': symbol, 'value': {
-                'firstPrice': prices[2][1],
-                'secondPrice': prices[1][1],
-                'thirdPrice': prices[0][1],
-                'timeFrame': timeframe
-            }}
+            return True, StudyThreeBarsFilter.barCandidate(symbol, prices[2][1], prices[1][1], prices[0][1], timeframe)
         elif len(prices) > 3 and StudyThreeBarsFilter._isFirstTwoBars(prices[3][1], prices[2][1], prices[0][1]):
-            return True, {'symbol': symbol, 'value': {
-                'firstPrice': prices[3][1],
-                'secondPrice': prices[2][1],
-                'thirdPrice': prices[0][1],
-                'timeFrame': timeframe
-            }}
+            return True, StudyThreeBarsFilter.barCandidate(symbol, prices[3][1], prices[2][1], prices[0][1], timeframe)
         else:
             return False, {}
         # else:

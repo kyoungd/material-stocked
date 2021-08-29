@@ -3,8 +3,11 @@ class StudyThreeBarsUtil:
 
     @staticmethod
     def standardDeviation(lst):
+        asize = len(lst)
+        if asize <= 0:
+            return 0
         avg = sum(lst) / len(lst)
-        var = sum((x-avg)**2 for x in lst) / len(lst)
+        var = sum((x-avg)**2 for x in lst) / asize
         std = var**0.5
         return std
 

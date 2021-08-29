@@ -51,7 +51,9 @@ sudo docker run -p 6379:6379 -it --rm redislabs/redistimeseries
 redis-cli
 ```
 
-more into
+## REDIS-TIMESERIES local version
+
+$ redis-server --loadmodule /home/young/Desktop/code/RedisTimeSeries/bin/redistimeseries.so
 
 ## Running GRAFANA in a DOCKER Container
 

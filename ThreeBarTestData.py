@@ -6,6 +6,7 @@ from redisUtil import SetInterval, TimeStamp, TimeSeriesAccess
 from datetime import datetime
 import time
 from MinuteBarStreaming import MinuteBarStream
+import sys
 
 rts = TimeSeriesAccess.connection()
 rtb = RealTimeBars()
@@ -78,6 +79,10 @@ def run_test():
 
 if __name__ == "__main__":
     MinuteBarStream.init()
+    args = sys.argv[1:]
+    if len(args) > 0 and (args[0] == "-t" or args[0] == "-table"):
+        app = CreateRedisStockTimeSeriesKeys()
+        app.run()
     create_test_data()
     tableKeys = CreateRedisStockTimeSeriesKeys()
     tableKeys._createRedisStockSymbol(

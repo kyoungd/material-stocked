@@ -1,5 +1,6 @@
 import logging
 import time
+import sys
 from redisUtil import AlpacaStreamAccess
 from redisPubsub import StreamBarsPublisher, StreamBarsSubscriber
 from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
@@ -103,8 +104,10 @@ def test():
 
 
 if __name__ == "__main__":
-    # app = CreateRedisStockTimeSeriesKeys()
-    # app.run()
+    args = sys.argv[1:]
+    if len(args) > 0 and (args[0] == "-t" or args[0] == "-table"):
+        app = CreateRedisStockTimeSeriesKeys()
+        app.run()
     MinuteBarStream.init()
     MinuteBarStream.run()
     # test()

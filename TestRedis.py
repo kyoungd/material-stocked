@@ -3,6 +3,7 @@ from redisUtil import AlpacaStreamAccess
 import time
 import logging
 from redisUtil import TimeSeriesAccess, AlpacaStreamAccess
+import threading
 
 
 # def column(matrix, i):
@@ -14,8 +15,8 @@ from redisUtil import TimeSeriesAccess, AlpacaStreamAccess
 # print(close_prices)
 
 
-# import alpaca_trade_api as alpaca
-# from alpaca_trade_api.stream import Stream
+import alpaca_trade_api as alpaca
+from alpaca_trade_api.stream import Stream
 # from alpaca_trade_api.common import URL
 # from redistimeseries.client import Client
 # from alpaca_trade_api.rest import REST
@@ -48,7 +49,12 @@ def run_connection(conn):
 
 
 async def print_trade(trade):
-    print('trade: ', trade)
+    try:
+        data = {'symbol': trade['S'],
+                'price': trade['p'], 'volume': trade['s']}
+        print('bar: ', data)
+    except:
+        pass
 
 
 async def print_quote(quote):
@@ -63,14 +69,25 @@ async def handleBar(bar):
     # publisher.publish(bar._raw)
 
 
+def undo():
+    print('sleeping..')
+    time.sleep(15)
+    print('sleep ended ========================================================================================')
+    try:
+        stream = AlpacaStreamAccess.connection()
+        stream.unsubscribe_trades('FB')
+    except Exception as error:
+        print(error)
+
+
 def run():
     logging.basicConfig(level=logging.INFO)
     stream = AlpacaStreamAccess.connection()
 
-    stream.subscribe_trades(print_trade, 'AAPL')
-    stream.subscribe_quotes(print_trade, 'IBM')
-    stream.subscribe_quotes(print_quote, 'AAPL')
-    stream.subscribe_quotes(print_trade, 'GOOG')
+    stream.subscribe_trades(print_trade, 'FB')
+    stream.subscribe_trades(print_trade, 'GOOG')
+    # stream.subscribe_quotes(print_quote, 'AAPL')
+    # stream.subscribe_quotes(print_trade, 'GOOG')
 
     # @stream.on_bar('*')
     # async def _(bar):
@@ -83,6 +100,8 @@ def run():
     # async def _(status):
     #     print('status', status)
 
+    x = threading.Thread(target=undo)
+    x.start()
     stream.run()
     run_connection(stream)
 

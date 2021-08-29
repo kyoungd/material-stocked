@@ -5,6 +5,8 @@ from redisUtil import AlpacaStreamAccess, KeyName
 from redisPubsub import RedisSubscriber
 from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
 from redis3barScore import StudyThreeBarsScore
+import asyncio
+import threading
 
 import alpaca_trade_api as alpaca
 from alpaca_trade_api.stream import Stream
@@ -25,79 +27,62 @@ from alpaca_trade_api.stream import Stream
 # z - string, tape
 
 
-async def print_trade(trade):
-    data = {'S': trade['S'],
-            'p': trade['p'], 's': trade['s']}
-    print('trade: ', data)
+def init():
+    try:
+        # make sure we have an event loop, if not create a new one
+        loop = asyncio.get_event_loop()
+        loop.set_debug(True)
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
+    global conn
+    conn = AlpacaStreamAccess.connection()
+    global process
+    process = StudyThreeBarsScore()
+    global subscriber
+    subscriber = RedisSubscriber(
+        KeyName.EVENT_NEW_CANDIDATES, callback=candidateEvent)
+    subscriber.start()
+    conn.run()
 
 
-class ThreeBarStudy():
-    log = None
-    subscriber: RedisSubscriber = None
-    stream: Stream = None
-    isInit: bool = False
-    process: StudyThreeBarsScore = None
-
-    @staticmethod
-    def init():
-        if not ThreeBarStudy.isInit:
-            ThreeBarStudy.log = logging.getLogger(__name__)
-            ThreeBarStudy.stream = AlpacaStreamAccess.connection()
-            ThreeBarStudy.isInit = True
-            ThreeBarStudy.process = StudyThreeBarsScore()
-            ThreeBarStudy.subscriber = RedisSubscriber(
-                KeyName.EVENT_NEW_CANDIDATES, callback=ThreeBarStudy.candidateEvent)
-            ThreeBarStudy.subscriber.start()
-
-    @staticmethod
-    def run_connection(conn):
-        try:
-            conn.run()
-        except Exception as e:
-            print(f'Exception from websocket connection: {e}')
-        finally:
-            print("Trying to re-establish connection")
-            time.sleep(3)
-            ThreeBarStudy.run_connection(conn)
-
-    @staticmethod
-    async def _handleTrade(trade):
-        data = {'symbol': trade['S'],
-                'price': trade['p'], 'volume': trade['s']}
-        print('bar: ', data)
-        ThreeBarStudy.process.study(data)
-
-    @staticmethod
-    def candidateEvent(data):
-        print(data)
-        if (ThreeBarStudy.stream == None):
-            return
-        if ('subscribe' in data and len(data['subscribe']) > 0):
-            for symbol in data['subscribe']:
-                try:
-                    ThreeBarStudy.stream.subscribe_trades(
-                        ThreeBarStudy._handleTrade, symbol)
-                except:
-                    print('subscribe failed: ', symbol)
-        if ('unsubscribe' in data and len(data['unsubscribe']) > 0):
-            for symbol in data['unsubscribe']:
-                try:
-                    ThreeBarStudy.stream.unsubscribe_trades(symbol)
-                except:
-                    print('unsubscribe failed: ', symbol)
-
-    @staticmethod
-    def run():
-        logging.basicConfig(level=logging.INFO)
-        ThreeBarStudy.stream.run()
-        ThreeBarStudy.run_connection(ThreeBarStudy.stream)
+async def _handleTrade(trade):
+    data = {'symbol': trade['S'],
+            'price': trade['p'], 'volume': trade['s']}
+    print('bar: ', data)
+    process.study(data)
 
 
-def createTestData():
-    root = {'T': 't', 'i': 80722, 'S': 'AAPL', 'x': 'D', 'p': 149.708, 's': 400, 'c': [
-        '@'], 'z': 'C', 't': 0}
+def candidateEvent(data):
+    print(data)
+    if (conn == None):
+        return
+    if ('subscribe' in data and len(data['subscribe']) > 0):
+        for symbol in data['subscribe']:
+            try:
+                print('subscribe to: ', symbol)
+                conn.subscribe_trades(_handleTrade, symbol)
+            except:
+                print('subscribe failed: ', symbol)
+    if ('unsubscribe' in data and len(data['unsubscribe']) > 0):
+        for symbol in data['unsubscribe']:
+            try:
+                print('unsubscribe to: ', symbol)
+                conn.unsubscribe_trades(symbol)
+            except:
+                print('unsubscribe failed: ', symbol)
+
+
+def run():
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
+                        level=logging.INFO)
+    threading.Thread(target=init).start()
+
+    loop = asyncio.get_event_loop()
+    time.sleep(5)  # give the initial connection time to be established
+    while 1:
+        pass
 
 
 if __name__ == "__main__":
-    ThreeBarStudy.init()
-    ThreeBarStudy.run()
+    run()

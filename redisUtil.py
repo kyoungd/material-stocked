@@ -70,11 +70,19 @@ class RedisAccess:
 
 
 class TimeSeriesAccess:
-
     @staticmethod
     def connection(r=None):
         if (r == None):
             return Client(host='127.0.0.1', port=6379)
+        else:
+            return r
+
+    @staticmethod
+    def connect(r=None):
+        if (r == None):
+            rds = redis.StrictRedis(
+                host='127.0.0.1', port=6379, db=0)
+            return redis.TimeSeries(rds, base_key='my_timeseries')
         else:
             return r
 
@@ -105,6 +113,8 @@ class KeyName:
     KEY_THREEBARSTACK_SUBSCRIBE = "STUDYTHREEBARSTACK_SUBSCRIBE"
     KEY_THREEBARSTACK_UNSUBSCRIBE = "STUDYTHREEBARSTACK_UNSUBSCRIBE"
     KEY_THREEBARSCORE = "STUDYTHREEBARSCORE"
+
+    KEY_SETUP_SCORE = "SETUP_SCORE"
 
     # Time Series Key for each symbol, data type and timeframe
     @staticmethod

@@ -94,15 +94,80 @@ class ThreeBarPlayStack(RedisHash):
         self.publisher.publish(data)
         self.subscribes = {}
         self.unsubscribes = {}
+        oneDict = self.getAll()
+        print('CANDIDATES:')
+        print(oneDict)
+
+
+class SetupScore (RedisHash):
+    def __init__(self, name):
+        self.key = KeyName.KEY_SETUP_SCORE
+        RedisHash.__init__(self, self.key)
+        self.name: str = name
+        self._score: int = 0
+        self._trend: int = 0
+        self._deviation: int = 0
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, value):
+        self._score = value
+
+    @property
+    def trend(self):
+        return self._trend
+
+    @trend.setter
+    def trend(self, value):
+        self._trend = value
+
+    @property
+    def deviation(self):
+        return self._deviation
+
+    @deviation.setter
+    def deviation(self, value):
+        self._deviation = value
+
+    def __str__(self):
+        str = '{ name: %s \n Score: %d \n trend: %d \n deviation: %d }' % (
+            self.name, self._score, self._trend, self._deviation)
+        return str
+
+    def save(self):
+        data = {'name': self.name,
+                'score': self._score,
+                'trend': self._trend,
+                'deviation': self._deviation,
+                }
+        self.add(self.name, data)
+
+    def load(self):
+        data = self.value(self.name)
+        self._score = data['score']
+        self._trend = data['trend']
+        self._deviation = data['deviation']
 
 
 if __name__ == "__main__":
-    app = ThreeBarPlayStack()
-    app.add("AAPL", {'name': 'test', 'data': 'this is text'})
-    myDict = app.redis.hvals('STUDYTHREEBARSTACK')
-    newDict = []
-    for item in myDict:
-        print(item)
-    data1 = app.value('FANG')
-    print(app.value("AAPL"))
-    print('done')
+    app = SetupScore('test')
+    app.score = 20
+    app.trend = 15
+    app.deviation = 20
+    print(app)
+    app.save()
+    bpp = SetupScore('test')
+    bpp.load()
+    print(bpp)
+    # app = ThreeBarPlayStack()
+    # app.add("AAPL", {'name': 'test', 'data': 'this is text'})
+    # myDict = app.redis.hvals('STUDYTHREEBARSTACK')
+    # newDict = []
+    # for item in myDict:
+    #     print(item)
+    # data1 = app.value('FANG')
+    # print(app.value("AAPL"))
+    # print('done')
